@@ -50,7 +50,7 @@ public class ExtHash <K, V>
             value = (V []) Array.newInstance (classV, SLOTS);
         } // constructor
         int getDepth(){
-        	return depth;
+               return depth;
         }
     } // Bucket inner class
     /***
@@ -150,20 +150,19 @@ public class ExtHash <K, V>
      */
     public V get (Object key)
     {
-        int    i = h (key);
+        int    i = Math.abs( h (key) );
         Bucket b = dir.get (i);
         count++;
         //Return null if key is not in bucket
         V ret = null;
         for(int j = 0; j < b.nKeys; j++){
         	//Search bucket for key
-        	if(b.key[j].equals(key)){
+        	if(b.key[j].toString().equals(key.toString())){
         		//If you find the key, set ret;
         		ret = b.value[j];
         		j = b.nKeys; //break
         	}
         }
-
         return ret;
     } // get
 
@@ -176,13 +175,13 @@ public class ExtHash <K, V>
      */
     public V put (K key, V value)
     {
-        int    i = h (key);
+        int    i = Math.abs( h (key) );
         Bucket b = dir.get (i);
         count++;
         //If the key is already in the bucket
         //We just want to replace it with the new value
         for(int j = 0; j < b.nKeys; j++){
-        	if(b.key[j].equals(key)){
+        	if(b.key[j].toString().equals( key.toString() ) ){
         		b.value[j] = value;
         		return null;
         	}

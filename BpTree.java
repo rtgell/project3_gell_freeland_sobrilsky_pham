@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * @file BpTree.java
  *
@@ -56,7 +55,7 @@ public class BpTree <K extends Comparable <K>, V>
 
     /** The root of the B+Tree
      */
-    private final Node root;
+    private Node root;      // Minh Pham: change private final to private only, spliting root cause the tree grows up
 
     /** The counter for the number nodes accessed (for performance testing).
      */
@@ -86,14 +85,32 @@ public class BpTree <K extends Comparable <K>, V>
     /***************************************************************************
      * Return a set containing all the entries as pairs of keys and values.
      * @return  the set view of the map
+     * Minh Pham
      */
     public Set <Map.Entry <K, V>> entrySet ()
     {
         Set <Map.Entry <K, V>> enSet = new HashSet <> ();
 
-             //-----------------\\
-            // TO BE IMPLEMENTED \\
-           //---------------------\\
+        Map<K, V> map = new HashMap<K, V>();
+        
+        Node n=root;
+        if(n==null) return enSet;
+        Queue<Node> myQueue = new LinkedList<Node>();
+        myQueue.add(n);
+        while(!myQueue.isEmpty()){
+               Node temp = myQueue.poll();
+               if(temp.isLeaf){
+        		for(int i=0; i<temp.nKeys; i++){
+        			map.put(temp.key[i], (V) temp.ref[i]);
+        		}
+        	}
+        	else{
+        		for(int i=0; i< temp.nKeys+1; i++){
+        			myQueue.add((Node)temp.ref[i]);
+        		}
+        	}
+        }
+        enSet = map.entrySet();
             
         return enSet;
     } // entrySet
@@ -124,27 +141,29 @@ public class BpTree <K extends Comparable <K>, V>
     /***************************************************************************
      * Return the first (smallest) key in the B+Tree map.
      * @return  the first key in the B+Tree map.
+     * Minh Pham
      */
     public K firstKey () 
     {
-             //-----------------\\
-            // TO BE IMPLEMENTED \\
-           //---------------------\\
-
-        return null;
+         Node n = root;
+             while(n!=null && !n.isLeaf){
+    		n = (Node) n.ref[0];
+    	  }
+    	  return n.key[0];
     } // firstKey
 
     /***************************************************************************
      * Return the last (largest) key in the B+Tree map.
      * @return  the last key in the B+Tree map.
+     * Minh Pham
      */
     public K lastKey () 
     {
-             //-----------------\\
-            // TO BE IMPLEMENTED \\
-           //---------------------\\
-
-        return null;
+         Node n = root;
+             while(n!=null && !n.isLeaf){
+    		n = (Node) n.ref[n.nKeys];
+    	  }
+    	  return n.key[n.nKeys-1];
     } // lastKey
 
     /***************************************************************************
@@ -190,14 +209,29 @@ public class BpTree <K extends Comparable <K>, V>
     /***************************************************************************
      * Return the size (number of keys) in the B+Tree.
      * @return  the size of the B+Tree
+     * Minh Pham
      */
     public int size ()
     {
+         // level order tree traversal-> store nodes in a queue
+        // add node.nKeyso to sum if it is a leaf
         int sum = 0;
-
-             //-----------------\\
-            // TO BE IMPLEMENTED \\
-           //---------------------\\
+        Node n =root;
+        if(root==null) return 0;
+        Queue<Node> myQueue = new LinkedList<Node>();   
+        myQueue.add(n);
+        while(!myQueue.isEmpty()){
+               Node temp = myQueue.poll();
+               if(temp.isLeaf){
+        		sum+=temp.nKeys;
+        		//System.out.println("count");
+        	}
+        	else{
+        		for(int i=0; i< temp.nKeys+1; i++){
+        			myQueue.add((Node)temp.ref[i]);
+        		}
+        	}
+        }
 
         return  sum;
     } // size
@@ -228,6 +262,7 @@ public class BpTree <K extends Comparable <K>, V>
      * Recursive helper function for finding a key in B+trees.
      * @param key  the key to find
      * @param ney  the current node
+     * Minh Pham: modify find()
      */
     @SuppressWarnings("unchecked")
     private V find (K key, Node n)
@@ -239,7 +274,7 @@ public class BpTree <K extends Comparable <K>, V>
                 if (n.isLeaf) {
                     return (key.equals (k_i)) ? (V) n.ref [i] : null;
                 } else {
-                    return find (key, (Node) n.ref [i]);
+                    return (key.equals (k_i)) ? find (key, (Node) n.ref [i+1]): find (key, (Node) n.ref [i]);          // the line has been modified to compatible to my code
                 } // if
             } // if
         } // for
@@ -252,27 +287,58 @@ public class BpTree <K extends Comparable <K>, V>
      * @param ref  the value/node to insert
      * @param n    the current node
      * @param p    the parent node
+     * Minh Pham: do not use recursive
      */
     private void insert (K key, V ref, Node n, Node p)
     {
-        if (n.nKeys < ORDER - 1) {
-            for (int i = 0; i < n.nKeys; i++) {
-                K k_i = n.key [i];
-                if (key.compareTo (k_i) < 0) {
-                    wedge (key, ref, n, i);
-                } else if (key.equals (k_i)) {
-                    out.println ("BpTree:insert: attempt to insert duplicate key = " + key);
-                } // if
-            } // for
-            wedge (key, ref, n, n.nKeys);
-        } else {
-            Node sib = split (key, ref, n);
+       int pos=0;
+           Stack<Node> myStack = new Stack();					// use stack to store the path from root to the leaf node being inserted key and ref
+    	while(!n.isLeaf){
+    		pos=0;
+    		while(pos<n.nKeys && n.key[pos].compareTo(key)<=0) pos++;
+    		p = n;
+    		myStack.add(p);
+    		n = (Node) n.ref[pos];    		
+    	}// after while loop: n points to a leaf
+    	
+    	pos=0;
+	while(pos<n.nKeys && n.key[pos].compareTo(key)<0) pos++;
+    	// get position to insert
 
-             //-----------------\\
-            // TO BE IMPLEMENTED \\
-           //---------------------\\
+	if(pos<n.nKeys && n.key[pos].compareTo(key)==0){
+              System.out.println ("BpTree:insert: attempt to insert duplicate key = " + key);
+              n.ref[pos]=ref;
+       return;
+	}
+		
+	// check number of entries
+    	if(n.nKeys==ORDER-1){									// n has ORDER-1 entries -> insertion causes node n splitting
+    		Node newNode = split(key, ref, n);
+			
+    		if(p==null);										// case: n points to root -> create new root
+    		else if(p.nKeys<ORDER-1){							// no need to split parent node, just insert the entry to parent node
+    			pos=0;
+    			while(pos<p.nKeys && p.key[pos].compareTo(key)<=0) pos++;	
+				wedge(newNode.key[0], (V)newNode, p, pos);
+			}
+    		else{												// parent node need splitting
+    			do{												// while loop to split nodes recursively from leaf back to root if needed
+    				p=myStack.pop();
+    				Node aNode = split(newNode.key[0],(V)newNode, p);
+    				newNode=aNode;
+    			}
+    			while(!myStack.isEmpty() && myStack.peek().nKeys==ORDER-1);
 
-        } // if
+    			if(!myStack.isEmpty()){							// node p is not full, just insert key and ref to this node							
+    				p = myStack.pop();
+    	   			pos=0;										
+        			while(pos<p.nKeys && p.key[pos].compareTo(key)<=0) pos++;
+    				wedge(newNode.key[0], (V)newNode,p,pos);
+    			}
+    		}
+    	}   	
+    	// n has fewer entries than ORDER-1
+    	else wedge(key, ref, n, pos);
     } // insert
 
     /***************************************************************************
@@ -281,16 +347,35 @@ public class BpTree <K extends Comparable <K>, V>
      * @param ref  the value/node to insert
      * @param n    the current node
      * @param i    the insertion position within node n
+     * Minh Pham: modify wedge() to compatible with my codes
      */
     private void wedge (K key, V ref, Node n, int i)
     {
-        for (int j = n.nKeys; j > i; j--) {
-            n.key [j] = n.key [j - 1];
-            n.ref [j] = n.ref [j - 1];
-        } // for
+        if(n.isLeaf){
+            for (int j = n.nKeys; j > i; j--) {
+                n.key [j] = n.key [j - 1];
+                n.ref [j] = n.ref [j - 1];
+            } // for
+            n.ref [i] = ref;
+        }
+        else{
+            for (int j = n.nKeys; j > i; j--) {
+                n.key [j] = n.key [j - 1];
+                n.ref [j+1] = n.ref [j];
+            } // for
+            n.ref [i+1] = ref;
+        }
         n.key [i] = key;
-        n.ref [i] = ref;
         n.nKeys++;
+        
+        if(ref.getClass().toString().equals("class BpTree$Node") && !((Node)ref).isLeaf){
+               for(int j=0; j<((Node)ref).nKeys-1; j++){
+               	((Node)ref).key[j]=((Node)ref).key[j+1];
+        		((Node)ref).ref[j]=((Node)ref).ref[j+1];
+        	}
+        	((Node)ref).ref[((Node)ref).nKeys-1]=((Node)ref).ref[((Node)ref).nKeys];
+        	((Node)ref).nKeys--;
+        }
     } // wedge
 
     /***************************************************************************
@@ -298,16 +383,59 @@ public class BpTree <K extends Comparable <K>, V>
      * @param key  the key to insert
      * @param ref  the value/node to insert
      * @param n    the current node
+     * Minh Pham
      */
     private Node split (K key, V ref, Node n)
     {
-        out.println ("split not implemented yet");
+        Node newNode = new Node(n.isLeaf);
+        // find the position to insert
+        int pos=0;
+        while(pos<ORDER-1 && key.compareTo(n.key[pos])>0){
+               pos++;
+        }
+        int mid = ORDER/2;       	// mid of node n
 
-             //-----------------\\
-            // TO BE IMPLEMENTED \\
-           //---------------------\\
+        // key is on the left within node n
+        if(pos<mid){
+        	if(ORDER%2==0) mid--;
+        	
+        	// copy to newnode
+            for(int i=0; i< ORDER/2; i++){
+            	newNode.key[i] = n.key[mid+i];
+            	newNode.ref[i] = n.ref[mid+i];
+            }
+            newNode.ref[ORDER/2]=n.ref[ORDER-1];
+        	n.nKeys=mid;
+            newNode.nKeys=ORDER/2;
+            
+            wedge(key, ref, n, pos);				// insert key and ref to node n
+        }
+        else{
+        	if(ORDER%2==1) mid++;
+        	n.nKeys=mid;
+        	pos-=mid;
 
-        return null;
+        	// copy to new node
+            for(int i=0; i< (ORDER-2)/2; i++){
+            	newNode.key[i] = n.key[mid+i];
+            	newNode.ref[i] = n.ref[mid+i];
+            }
+            newNode.ref[(ORDER-2)/2]=n.ref[ORDER-1];
+        	newNode.nKeys=(ORDER-2)/2;
+        	
+        	// insert key and ref to the new node
+        	wedge(key, ref, newNode, pos);				
+         }
+
+        // splitting the root causes creating newRoot
+        if(n==root){
+        	Node newRoot = new Node(false);
+        	newRoot.ref[0]=n;
+        	wedge(newNode.key[0], (V) newNode, newRoot, 0);
+        	root =newRoot;
+        }
+        
+        return newNode;
     } // split
 
     /***************************************************************************

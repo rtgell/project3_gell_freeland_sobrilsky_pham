@@ -1,4 +1,5 @@
 
+
 /*******************************************************************************
  * @file ExtHash.java
  *
@@ -38,13 +39,18 @@ public class ExtHash <K, V>
         int  nKeys;
         K [] key;
         V [] value;
+        int depth;
         @SuppressWarnings("unchecked")
-        Bucket ()
+        Bucket (int d)
         {
             nKeys = 0;
+            depth = d;
             key   = (K []) Array.newInstance (classK, SLOTS);
             value = (V []) Array.newInstance (classV, SLOTS);
         } // constructor
+        int getDepth(){
+        	return depth;
+        }
     } // Bucket inner class
     private class Entry implements Map.Entry <K, V>
     {
@@ -106,7 +112,7 @@ public class ExtHash <K, V>
         dir    = new ArrayList <Bucket> ();   // for bucket access
         mod    = nBuckets = initSize;
         for(int i = 0; i < initSize; i++){
-        	Bucket b = new Bucket();
+        	Bucket b = new Bucket(mod);
         	hTable.add(b);
         	dir.add(b);
         }
@@ -177,26 +183,59 @@ public class ExtHash <K, V>
         }
     } // put
     private void expand(Bucket b, K key, V value){
-    	    int size = dir.size();
-    	    for(int i = 0; i < size; i++){
-    	    	    dir.add(dir.get(i));
+    	    int depth;
+    	    if(b.getDepth() == mod){
+    	    	    int size = dir.size();
+    	    	    for(int i = 0; i < size; i++){
+    	    	    	    dir.add(dir.get(i));
+    	    	    }
+    	    	    int i = h(key);
+    	    	    int j = i+mod;
+    	    	    mod = mod*2;
+    	    	    depth = mod;
+    	    	    Bucket buck1 = new Bucket(mod);
+    	    	    Bucket buck2 = new Bucket(mod);
+    	    	    nBuckets++;
+    	    	    for(int k = 0; k < hTable.size(); k++){
+    	    	    	    if(hTable.get(k).equals(b)){hTable.remove(k); k = hTable.size();}
+    	    	    }
+    	    	    dir.remove(i);
+    	    	    dir.add(i, buck1);
+    	    	    dir.remove(j);
+    	    	    dir.add(j, buck2);
+    	    	    hTable.add(buck1);
+    	    	    hTable.add(buck2);
     	    }
-    	    int i = h(key);
-    	    int j = i+mod;
-    	    mod = mod*2;
-    	    Bucket buck1 = new Bucket();
-    	    Bucket buck2 = new Bucket();
-    	    nBuckets++;
-    	    for(int k = 0; k < hTable.size(); k++){
-    	    	    if(hTable.get(k).equals(b)){hTable.remove(k);}
+    	    else{
+    	    	    int d = b.getDepth();
+    	    	    int i = 0;
+    	    	    for(int l = 0; l < dir.size(); l++){
+    	    	    	    if(b.equals(dir.get(l))){
+    	    	    	       i = l;
+    	    	    	       l = dir.size();
+    	    	    	    }
+    	    	    }
+    	    	    Bucket buck1 = new Bucket(d*2);
+    	    	    Bucket buck2 = new Bucket(d*2);
+    	    	    int k = 0;
+    	    	    for(int l = 0; l < hTable.size(); l++){
+    	    	    	    if(hTable.get(l).equals(b)){hTable.remove(l); l = hTable.size();}
+    	    	    }
+    	    	    hTable.add(buck1);
+    	    	    hTable.add(buck2);
+    	    	    while(i < mod){
+    	    	    	    if(k % 2 == 0){
+    	    	    	    	    dir.remove(i);
+    	    	    	    	    dir.add(i, buck1);
+    	    	    	    }
+    	    	    	    else{
+    	    	    	    	    dir.remove(i);
+    	    	    	    	    dir.add(i, buck2);
+    	    	    	    }
+    	    	    	    k++;
+    	    	    	    i = i + d;  	    
+    	    	    }
     	    }
-    	    dir.remove(i);
-    	    System.out.println(i + " " + j);
-    	    dir.add(i, buck1);
-    	    dir.remove(j);
-    	    dir.add(j, buck2);
-    	    hTable.add(buck1);
-    	    hTable.add(buck2);
     	    put(key, value);
     	    for(int k = 0; k < b.nKeys; k++){
     	    	    put(b.key[k], b.value[k]);
@@ -218,13 +257,12 @@ public class ExtHash <K, V>
         out.println ("Hash Table (Extendable Hashing)");
         out.println ("-------------------------------------------");
         for(int i = 0; i < dir.size(); i++){
-        	System.out.println("Bucket " + i + ":");
         	Bucket b = dir.get(i);
+        	System.out.println("Bucket " + i + ":" + " Depth:" + b.getDepth());
         	for(int j = 0; j < b.nKeys; j++){
-        		System.out.println("Key:" + b.key[j] + " value:"+b.value[j]);
+        		System.out.println("Key:" + b.key[j] + " value:"+b.value[j] );
         	}
         }
-        System.out.println(hTable.size());
         out.println ("-------------------------------------------");
     } // print
 
@@ -243,7 +281,7 @@ public class ExtHash <K, V>
      * @param  the command-line arguments (args [0] gives number of keys to insert)
      */
     public static void main (String [] args)
-    {
+    {                                       
         ExtHash <Integer, Integer> ht = new ExtHash <Integer, Integer> (Integer.class, Integer.class, 2);
         int nKeys = 30;
         if (args.length == 1) nKeys = Integer.valueOf (args [0]);
@@ -254,7 +292,6 @@ public class ExtHash <K, V>
         } // for
         out.println ("-------------------------------------------");
         out.println ("Average number of buckets accessed = " + ht.count / (double) nKeys);
-        System.out.println(ht.entrySet());
     } // main
 
 } // ExtHash class

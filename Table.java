@@ -69,7 +69,8 @@ public class Table
         domain    = _domain;
         key       = _key;
         tuples    = new FileList (this, tupleSize ());
-        index     = new TreeMap <KeyType, Comparable[]> ();                  // also try BPTreeMap, LinHash or ExtHash
+        //index     = new TreeMap <KeyType, Comparable[]> ();                  // also try BPTreeMap, LinHash or ExtHash
+        index     = new ExtHash<KeyType, Comparable[]> (KeyType.class, Comparable[].class, attribute.length);
     } // Table
 
     /***************************************************************************
@@ -215,17 +216,17 @@ public class Table
 
         Table result = new Table (name + count++, attribute, domain, key);
 
-	if ( !this.compatible(table2) ){
-	    System.err.println("Error: Tables not compatible. " + name + " returned.");
-	} else{
-	    for ( int i=0; i<this.tuples.size(); i++ ){
-		    if (isEqual(this.tuples.get(i),table2.getTupFromKey(getKeyVal(this.tuples.get(i))) ) ){
-		        break;
-		    } else{
-		        result.insert( this.tuples.get(i) );
+		if ( !this.compatible(table2) ){
+		    System.err.println("Error: Tables not compatible. " + name + " returned.");
+		} else{
+		    for ( int i=0; i<this.tuples.size(); i++ ){
+			    if (isEqual(this.tuples.get(i),table2.getTupFromKey(getKeyVal(this.tuples.get(i))) ) ){
+			        break;
+			    } else{
+			        result.insert( this.tuples.get(i) );
+			    }
 		    }
-	    }
-	}
+		}
 
         return result;
     } // minus
@@ -338,6 +339,7 @@ public class Table
 		
 		skipCounter = 0;
 		for(int t2FillIndex=0; t2FillIndex<t2FillLimit; t2FillIndex++){
+			out.println(t2FillIndex);
 			if(table2.getAttributeAt(t2FillIndex).equals(rightCondName) && !keepAllAttributes){
 				skipCounter--;
 				continue;
@@ -997,7 +999,7 @@ public class Table
 	if(tup1 == null && tup2 == null){return true;}
 	else if(tup1 == null || tup2 == null){return false;}
     	for(int i = 0; i<size ; i++){ 
-		if(tup1[i].equals(tup2[i])){j++;}
+    		if(tup1[i].equals(tup2[i])){j++;}
     	}
     	if(j==size){
     		return true;
@@ -1006,4 +1008,3 @@ public class Table
     }
 
 } // Table class
-

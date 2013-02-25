@@ -71,7 +71,8 @@ public class Table
         tuples    = new FileList (this, tupleSize ());
         //index     = new TreeMap <KeyType, Comparable[]> ();                  // also try BPTreeMap, LinHash or ExtHash
         index     = new ExtHash<KeyType, Comparable[]> (KeyType.class, Comparable[].class, attribute.length);
-    } // Table
+        //index = new BpTree <KeyType, Comparable[]> (KeyType.class, Comparable[].class);	// code for index if using BpTree
+     } // Table
 
     /***************************************************************************
      * Construct an empty table from the raw string specifications.

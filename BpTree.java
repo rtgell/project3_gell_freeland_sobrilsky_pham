@@ -53,6 +53,37 @@ public class BpTree <K extends Comparable <K>, V>
         } // constructor
     } // Node inner class
 
+    /****************************************************
+     *class Entry implement Map.Entry 
+     *Minh Pham
+     */
+    private class Entry implements Map.Entry <K, V>
+    {
+     K key;
+     V value;
+     Entry(K k, V v){
+     key = k;
+     value = v;
+     }
+     public V setValue(V value){
+     this.value = value;
+     return value;
+     }
+     public V getValue(){
+     return value;
+     }
+     public K setKey(K key){
+     this.key = key;
+     return key;
+     }
+     public K getKey(){
+     return key;
+     }
+     public String toString(){
+     return "[" + key + "," + value + "]";
+     }
+    }
+
     /** The root of the B+Tree
      */
     private Node root;      // Minh Pham: change private final to private only, spliting root cause the tree grows up
@@ -89,9 +120,7 @@ public class BpTree <K extends Comparable <K>, V>
      */
     public Set <Map.Entry <K, V>> entrySet ()
     {
-        Set <Map.Entry <K, V>> enSet = new HashSet <> ();
-	// make the code easier by creating new private method 
-        /*Map<K, V> map = new HashMap<K, V>();
+        Set <Map.Entry <K, V>> enSet = new HashSet <Map.Entry <K, V>> ();
         
         Node n=root;
         if(n==null) return enSet;
@@ -101,7 +130,7 @@ public class BpTree <K extends Comparable <K>, V>
                Node temp = myQueue.poll();
                if(temp.isLeaf){
         		for(int i=0; i<temp.nKeys; i++){
-        			map.put(temp.key[i], (V) temp.ref[i]);
+        			enSet.add(new Entry(temp.key[i], (V) temp.ref[i]));
         		}
         	}
         	else{
@@ -110,8 +139,6 @@ public class BpTree <K extends Comparable <K>, V>
         		}
         	}
         }
-        enSet = map.entrySet();*/
-        enSet=TreeMap().entrySet();
             
         return enSet;
     } // entrySet
@@ -473,8 +500,8 @@ public class BpTree <K extends Comparable <K>, V>
      */
     public static void main (String [] args)
     {
-        BpTree <Integer, Integer> bpt = new BpTree <> (Integer.class, Integer.class);
-        int totKeys = 10;
+        BpTree <Integer, Integer> bpt = new BpTree <Integer, Integer> (Integer.class, Integer.class);
+        int totKeys = 45;
         if (args.length == 1) totKeys = Integer.valueOf (args [0]);
         for (int i = 1; i < totKeys; i += 2) bpt.put (i, i * i);
         bpt.print (bpt.root, 0);

@@ -90,8 +90,8 @@ public class BpTree <K extends Comparable <K>, V>
     public Set <Map.Entry <K, V>> entrySet ()
     {
         Set <Map.Entry <K, V>> enSet = new HashSet <> ();
-
-        Map<K, V> map = new HashMap<K, V>();
+	// make the code easier by creating new private method 
+        /*Map<K, V> map = new HashMap<K, V>();
         
         Node n=root;
         if(n==null) return enSet;
@@ -110,10 +110,39 @@ public class BpTree <K extends Comparable <K>, V>
         		}
         	}
         }
-        enSet = map.entrySet();
+        enSet = map.entrySet();*/
+        enSet=TreeMap().entrySet();
             
         return enSet;
     } // entrySet
+
+
+    /***************************************************************************
+     * Return a TreeMap containing all the entries as pairs of keys and values.
+     * @return  the the TreeMap
+     * Minh Pham
+     */
+    private TreeMap<K,V> TreeMap ()
+    {
+        TreeMap<K, V> map = new TreeMap<K, V>();
+        Node n=root;
+        Queue<Node> myQueue = new LinkedList<Node>();
+        myQueue.add(n);
+        while(!myQueue.isEmpty()){
+               Node temp = myQueue.poll();
+               if(temp.isLeaf){
+        		for(int i=0; i<temp.nKeys; i++){
+        			map.put(temp.key[i], (V) temp.ref[i]);
+        		}
+        	}
+        	else{
+        		for(int i=0; i< temp.nKeys+1; i++){
+        			myQueue.add((Node)temp.ref[i]);
+        		}
+        	}
+        }            
+        return map;
+    } // TreeMap
 
     /***************************************************************************
      * Given the key, look up the value in the B+Tree map.
@@ -175,8 +204,8 @@ public class BpTree <K extends Comparable <K>, V>
              //-----------------\\
             // TO BE IMPLEMENTED \\
            //---------------------\\
-
-        return null;
+        
+        return TreeMap().headMap(toKey);
     } // headMap
 
     /***************************************************************************
@@ -188,8 +217,8 @@ public class BpTree <K extends Comparable <K>, V>
              //-----------------\\
             // TO BE IMPLEMENTED \\
            //---------------------\\
-
-        return null;
+        
+        return TreeMap().tailMap(fromKey);
     } // tailMap
 
     /***************************************************************************
@@ -202,8 +231,8 @@ public class BpTree <K extends Comparable <K>, V>
              //-----------------\\
             // TO BE IMPLEMENTED \\
            //---------------------\\
-
-        return null;
+	
+        return TreeMap().subMap(fromKey, toKey);
     } // subMap
 
     /***************************************************************************

@@ -55,7 +55,7 @@ public class BpTree <K extends Comparable <K>, V>
 
     /****************************************************
      *class Entry implement Map.Entry 
-     *Minh Pham
+     *@author Minh Pham
      */
     private class Entry implements Map.Entry <K, V>
     {
@@ -116,7 +116,7 @@ public class BpTree <K extends Comparable <K>, V>
     /***************************************************************************
      * Return a set containing all the entries as pairs of keys and values.
      * @return  the set view of the map
-     * Minh Pham
+     * @author Minh Pham
      */
     public Set <Map.Entry <K, V>> entrySet ()
     {
@@ -147,7 +147,7 @@ public class BpTree <K extends Comparable <K>, V>
     /***************************************************************************
      * Return a TreeMap containing all the entries as pairs of keys and values.
      * @return  the the TreeMap
-     * Minh Pham
+     * @author Minh Pham
      */
     private TreeMap<K,V> TreeMap ()
     {
@@ -197,7 +197,7 @@ public class BpTree <K extends Comparable <K>, V>
     /***************************************************************************
      * Return the first (smallest) key in the B+Tree map.
      * @return  the first key in the B+Tree map.
-     * Minh Pham
+     * @author Minh Pham
      */
     public K firstKey () 
     {
@@ -211,7 +211,7 @@ public class BpTree <K extends Comparable <K>, V>
     /***************************************************************************
      * Return the last (largest) key in the B+Tree map.
      * @return  the last key in the B+Tree map.
-     * Minh Pham
+     * @author Minh Pham
      */
     public K lastKey () 
     {
@@ -225,47 +225,47 @@ public class BpTree <K extends Comparable <K>, V>
     /***************************************************************************
      * Return the portion of the B+Tree map where key < toKey.
      * @return  the submap with keys in the range [firstKey, toKey)
+     * @author Zachary Freeland
      */
     public SortedMap <K,V> headMap (K toKey)
     {
-             //-----------------\\
-            // TO BE IMPLEMENTED \\
-           //---------------------\\
-        
-        return TreeMap().headMap(toKey);
+
+	SubMap sub = new SubMap(this, null, false, toKey, false);
+        return sub;
+
     } // headMap
 
     /***************************************************************************
      * Return the portion of the B+Tree map where fromKey <= key.
      * @return  the submap with keys in the range [fromKey, lastKey]
+     * @author Zachary Freeland
      */
     public SortedMap <K,V> tailMap (K fromKey)
     {
-             //-----------------\\
-            // TO BE IMPLEMENTED \\
-           //---------------------\\
-        
-        return TreeMap().tailMap(fromKey);
+
+	SubMap sub = new SubMap(this, fromKey, true, null, false);
+        return sub;
+
     } // tailMap
 
     /***************************************************************************
      * Return the portion of the B+Tree map whose keys are between fromKey and toKey,
      * i.e., fromKey <= key < toKey.
      * @return  the submap with keys in the range [fromKey, toKey)
+     * @author Zachary Freeland
      */
     public SortedMap <K,V> subMap (K fromKey, K toKey)
     {
-             //-----------------\\
-            // TO BE IMPLEMENTED \\
-           //---------------------\\
-	
-        return TreeMap().subMap(fromKey, toKey);
+
+	SubMap sub = new SubMap(this, fromKey, true, toKey, false);
+        return sub;
+
     } // subMap
 
     /***************************************************************************
      * Return the size (number of keys) in the B+Tree.
      * @return  the size of the B+Tree
-     * Minh Pham
+     * @author Minh Pham
      */
     public int size ()
     {
@@ -318,7 +318,7 @@ public class BpTree <K extends Comparable <K>, V>
      * Recursive helper function for finding a key in B+trees.
      * @param key  the key to find
      * @param ney  the current node
-     * Minh Pham: modify find()
+     * @author Minh Pham: modify find()
      */
     @SuppressWarnings("unchecked")
     private V find (K key, Node n)
@@ -343,7 +343,7 @@ public class BpTree <K extends Comparable <K>, V>
      * @param ref  the value/node to insert
      * @param n    the current node
      * @param p    the parent node
-     * Minh Pham: do not use recursive
+     * @author Minh Pham: do not use recursive
      */
     private void insert (K key, V ref, Node n, Node p)
     {
@@ -403,7 +403,7 @@ public class BpTree <K extends Comparable <K>, V>
      * @param ref  the value/node to insert
      * @param n    the current node
      * @param i    the insertion position within node n
-     * Minh Pham: modify wedge() to compatible with my codes
+     * @author Minh Pham: modify wedge() to compatible with my codes
      */
     private void wedge (K key, V ref, Node n, int i)
     {
@@ -439,7 +439,7 @@ public class BpTree <K extends Comparable <K>, V>
      * @param key  the key to insert
      * @param ref  the value/node to insert
      * @param n    the current node
-     * Minh Pham
+     * @author Minh Pham
      */
     private Node split (K key, V ref, Node n)
     {
@@ -495,6 +495,155 @@ public class BpTree <K extends Comparable <K>, V>
     } // split
 
     /***************************************************************************
+     * Return the number of keys in an interval
+     * @param lo    lower limit of interval, can be null
+     * @param loIn  whether lo is "in" interval
+     * @param hi    upper limit, can be null
+     * @param hiIn  whether hi is "in" interval
+     * @return  number of keys within the interval defined by params
+     * @author Zachary Freeland
+     */
+
+    public int nKeysInInterval(K lo, Boolean loIn, K hi, Boolean hiIn) {	    
+
+	int sum = 0;
+	Node n =root;
+	if(root==null) return 0;
+	Queue<Node> q = new LinkedList<Node>();   
+	q.add(n);
+	while(!q.isEmpty()){
+	    Node temp = q.poll();
+	    int i = 0;
+	    int j = 0;
+	    int k = temp.nKeys;
+	    if(temp.isLeaf){
+		if(lo != null)
+		    while( i < temp.nKeys && !inInterval(temp.key[i], lo, loIn, hi, hiIn) ) { i++; }
+		if(hi != null)
+		    while( k > i && !inInterval(temp.key[k-1], lo, loIn, hi, hiIn) ) { k--; }
+		sum+= k - i;
+	    }
+	    else{
+		if(lo != null)
+		    while( i < temp.nKeys && !inInterval(temp.key[i], lo, loIn, hi, hiIn) ) { i++; }
+		if(hi != null)
+		    while( k > i && !inInterval(temp.key[k-1], lo, loIn, hi, hiIn) ) { k--; }
+		    if(i != 0)
+			i--;
+		    for(; i < k; i++)
+			q.add((Node)temp.ref[i]);
+	    }//else
+	}//while
+	return  sum;
+    } // nKeysInRange
+
+    /***************************************************************************
+     * Return whether key is in an interval
+     * @param key   key to test
+     * @param lo    lower limit of interval, can be null
+     * @param loIn  whether lo is "in" interval
+     * @param hi    upper limit, can be null
+     * @param hiIn  whether hi is "in" interval
+     * @return  number of keys within the interval defined by params
+     * @author Zachary Freeland
+     */
+    private boolean inInterval(K key, K lo, Boolean loIn, K hi, Boolean hiIn) {
+
+	if (lo != null) {
+	    int c = key.compareTo(lo);
+	    if (c < 0 || (c == 0 && !loIn))
+		return false; //key is too low
+	}
+
+	if (hi != null) {
+	    int c = key.compareTo(hi);
+	    if (c > 0 || (c == 0 && !hiIn))
+		return false; //key is too high
+	}
+
+	return true;
+    }
+
+
+    /***************************************************************************
+     * Return the first key within an interval
+     * @param lo    lower limit of interval, can be null
+     * @param loIn  whether lo is "in" interval
+     * @param hi    upper limit, can be null
+     * @param hiIn  whether hi is "in" interval
+     * @return  first key within the interval defined by params
+     * @author Zachary Freeland
+     */
+    public K firstKeyInInterval(K lo, Boolean loIn, K hi, Boolean hiIn) {
+	K first = null;
+	if ( lo == null ){
+	    first = firstKey();
+	} else {
+	    Queue<Node> q = new LinkedList<Node>();
+	    q.add(root);
+	    while( !q.isEmpty() ){
+		Node temp = q.poll();
+		if( temp.isLeaf ){
+		    for( int i = 0; i < temp.nKeys; i++){
+			if( inInterval(temp.key[i], lo, loIn, hi, hiIn) ){
+			    first = temp.key[i];
+			    while(!q.isEmpty() ) { q.poll(); }
+			}//if
+		    }//for
+
+		}else{
+		    for( int i = 0; i < temp.nKeys; i++){
+			if( inInterval(temp.key[i], lo, loIn, hi, hiIn) ){
+			    if(i != 0)
+				q.add((Node)temp.ref[i-1]);
+			    q.add((Node)temp.ref[i]);
+			}//if
+		    }//for
+
+		}//else
+
+	    }//while
+
+	}//else
+	return first;
+    }
+
+
+    /***************************************************************************
+     * Return the last key within an interval
+     * @param lo    lower limit of interval, can be null
+     * @param loIn  whether lo is "in" interval
+     * @param hi    upper limit, can be null
+     * @param hiIn  whether hi is "in" interval
+     * @return  last key within the interval defined by params
+     * @author Zachary Freeland
+     */
+    public K lastKeyInInterval(K lo, Boolean loIn, K hi, Boolean hiIn) {
+	K last = null;
+	if ( hi == null ){
+	    last = lastKey();
+	} else {
+	    Node n = root;
+	    int i = n.nKeys;
+	    int j = 0;
+	    while(!n.isLeaf){
+		i = n.nKeys;
+		while( !inInterval(n.key[i], lo, loIn, hi, hiIn) && i >= 0 )
+		    i--;
+		// key[i] < (|| =) hi after loop
+		n = (Node)n.ref[i];
+	    }
+	    i = n.nKeys;
+	    while( !inInterval(n.key[i], lo, loIn, hi, hiIn) && i >= 0 )
+		i--;
+	    //key[i] < (|| =) hi after loop
+	    last = n.key[i];
+	}
+	return last;
+    }
+
+
+    /***************************************************************************
      * The main method used for testing.
      * @param  the command-line arguments (args [0] gives number of keys to insert)
      */
@@ -511,6 +660,289 @@ public class BpTree <K extends Comparable <K>, V>
         out.println ("-------------------------------------------");
         out.println ("Average number of nodes accessed = " + bpt.count / (double) totKeys);
     } // main
+
+    /***************************************************************************
+     * SubMap class below is derived from the SubMap implementation in api class
+     * java.util.concurrent.ConcurrentSkipListMap, Authors are as noted in the
+     * copied file header except where @author tags are present to indicate 
+     * newly written methods to provide functionality for the BpTree class, as
+     * well as some minor changes throuchout that make the existing constructors
+     * and other code compatible with the implementation of BpTree.
+     * @author Zachary Freeland
+     *
+     * The first following comment is a copy of the GNU GPL 2 header the original
+     * code is distributed with
+     */
+
+/*
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Sun designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Sun in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+ * CA 95054 USA or visit www.sun.com if you need additional information or
+ * have any questions.
+ */
+
+/*
+ * This file is available under and governed by the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
+ * However, the following notice accompanied the original version of this
+ * file:
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/licenses/publicdomain
+ */
+
+
+    /**
+     * Submaps returned by {@link BpTree} submap operations
+     * represent a subrange of mappings of their underlying
+     * maps. Instances of this class support all methods of their
+     * underlying maps, differing in that mappings outside their range are
+     * ignored, and attempts to add mappings outside their ranges result
+     * in {@link IllegalArgumentException}.  Instances of this class are
+     * constructed only using the <tt>subMap</tt>, <tt>headMap</tt>, and
+     * <tt>tailMap</tt> methods of their underlying maps.
+     *
+     * @serial include
+     */
+    static final class SubMap<K extends Comparable <K>,V> extends AbstractMap<K,V>
+        implements SortedMap<K,V>, Cloneable,
+                   java.io.Serializable {
+
+        /** Underlying map */
+        private final BpTree<K,V> t;
+        /** lower bound key, or null if from start */
+        private final K lo;
+        /** upper bound key, or null if to end */
+        private final K hi;
+        /** inclusion flag for lo */
+        private final boolean loInclusive;
+        /** inclusion flag for hi */
+        private final boolean hiInclusive;
+
+        // Lazily initialized view holders
+        private transient Set<K> keySetView;
+        private transient Set<Map.Entry<K,V>> entrySetView;
+        private transient Collection<V> valuesView;
+
+        /**
+         * Creates a new submap, initializing all fields
+         */
+        SubMap(BpTree<K,V> tree,
+               K fromKey, boolean fromInclusive,
+               K toKey, boolean toInclusive) {
+            if (fromKey != null && toKey != null &&
+                fromKey.compareTo(toKey) > 0)
+                throw new IllegalArgumentException("inconsistent range");
+            this.t = tree;
+            this.lo = fromKey;
+            this.hi = toKey;
+            this.loInclusive = fromInclusive;
+            this.hiInclusive = toInclusive;
+        }
+
+        /* ----------------  Utilities -------------- */
+
+        private boolean tooLow(K key) {
+            if (lo != null) {
+                int c = key.compareTo(lo);
+                if (c < 0 || (c == 0 && !loInclusive))
+                    return true;
+            }
+            return false;
+        }
+
+        private boolean tooHigh(K key) {
+            if (hi != null) {
+                int c = key.compareTo(hi);
+                if (c > 0 || (c == 0 && !hiInclusive))
+                    return true;
+            }
+            return false;
+        }
+
+        private boolean inBounds(K key) {
+            return !tooLow(key) && !tooHigh(key);
+        }
+
+        private void checkKeyBounds(K key) throws IllegalArgumentException {
+            if (key == null)
+                throw new NullPointerException();
+            if (!inBounds(key))
+                throw new IllegalArgumentException("key out of range");
+        }
+
+        /* ----------------  Map API methods -------------- */
+
+        public boolean containsKey(Object key) {
+            if (key == null) throw new NullPointerException();
+            K k = (K)key;
+            return inBounds(k) && t.containsKey(k);
+        }
+
+        public V get(Object key) {
+            if (key == null) throw new NullPointerException();
+            K k = (K)key;
+            return ((!inBounds(k)) ? null : t.get(k));
+        }
+
+        public V put(K key, V value) {
+            return t.put(key, value);
+        }
+
+	/***************************************************************************
+	 * Return the size of the SubMap
+	 * @return  number of keys within the range of the submap
+	 * @author Zachary Freeland
+	 */
+
+
+        public int size() {	    
+	    return t.nKeysInInterval(lo, loInclusive, hi, hiInclusive);
+	} // size
+
+        /* ----------------  SortedMap API methods -------------- */
+
+        public Comparator<? super K> comparator() {
+            return t.comparator();
+        }
+
+        /**
+         * Utility to create submaps, where given bounds override
+         * unbounded(null) ones and/or are checked against bounded ones.
+         */
+        private SubMap<K,V> newSubMap(K fromKey,
+                                      boolean fromInclusive,
+                                      K toKey,
+                                      boolean toInclusive) {
+            if (lo != null) {
+                if (fromKey == null) {
+                    fromKey = lo;
+                    fromInclusive = loInclusive;
+                }
+                else {
+                    int c = fromKey.compareTo(lo);
+                    if (c < 0 || (c == 0 && !loInclusive && fromInclusive))
+                        throw new IllegalArgumentException("key out of range");
+                }
+            }
+            if (hi != null) {
+                if (toKey == null) {
+                    toKey = hi;
+                    toInclusive = hiInclusive;
+                }
+                else {
+                    int c = toKey.compareTo(hi);
+                    if (c > 0 || (c == 0 && !hiInclusive && toInclusive))
+                        throw new IllegalArgumentException("key out of range");
+                }
+            }
+            return new SubMap<K,V>(t, fromKey, fromInclusive,
+                                   toKey, toInclusive);
+        }
+
+        public SubMap<K,V> subMap(K fromKey,
+                                  boolean fromInclusive,
+                                  K toKey,
+                                  boolean toInclusive) {
+            if (fromKey == null || toKey == null)
+                throw new NullPointerException();
+            return newSubMap(fromKey, fromInclusive, toKey, toInclusive);
+        }
+
+        public SubMap<K,V> headMap(K toKey, boolean inclusive) {
+            if (toKey == null)
+                throw new NullPointerException();
+            return newSubMap(null, false, toKey, inclusive);
+        }
+
+        public SubMap<K,V> tailMap(K fromKey, boolean inclusive) {
+            if (fromKey == null)
+                throw new NullPointerException();
+            return newSubMap(fromKey, inclusive, null, false);
+        }
+
+        public SubMap<K,V> subMap(K fromKey, K toKey) {
+            return subMap(fromKey, true, toKey, false);
+        }
+
+        public SubMap<K,V> headMap(K toKey) {
+            return headMap(toKey, false);
+        }
+
+        public SubMap<K,V> tailMap(K fromKey) {
+            return tailMap(fromKey, true);
+        }
+
+	/***************************************************************************
+	 * Return the first key within this SubMap
+	 * @return  first key within the range of the submap
+	 * @author Zachary Freeland
+	 */
+
+        public K firstKey() {
+	    if ( size() == 0 )
+		return null;
+	    else if (lo == null)
+		return t.firstKey();
+	    else
+		return t.firstKeyInInterval(lo, loInclusive, hi, hiInclusive);
+        }
+
+
+	/***************************************************************************
+	 * Return the last key within this SubMap
+	 * @return  last key within the range of the submap
+	 * @author Zachary Freeland
+	 */
+        public K lastKey() {
+	    if ( size() == 0 )
+		return null;
+	    else if (hi == null)
+		return t.lastKey();
+	    else
+		return t.lastKeyInInterval(lo, loInclusive, hi, hiInclusive);
+	}
+
+	/***************************************************************************
+	 * Returns copy of entrySet from underlying tree after removing extraneous
+	 * entries
+	 * @return  Set of entries view of SubMap
+	 * @author Zachary Freeland
+	 */
+
+        public Set<Map.Entry<K,V>> entrySet() {
+            Set<Map.Entry<K,V>> es = entrySetView;
+            if (es != null){
+		entrySetView = t.entrySet();
+		Object[] entries = entrySetView.toArray();
+		K e = null;
+		for(int i=0; i < entries.length; i++)
+		    if( !inBounds( (e = ((Map.Entry<K,V>)entries[i]).getKey()) ) )
+			entrySetView.remove(e);
+		es = entrySetView;
+	    }
+	    return es;
+        }
+    }// SubMap class
+
 
 } // BpTree class
 
